@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - '8080:8080'
+    volumes:
+      - ./api-gateway:/app/src
+    command: go run main.go
+
+  # frontend:
+  #   build:
+  #     context: ./photo-app-frontend
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - '3000:3000'
+  #   volumes:
+  #     - ./photo-app-frontend:/app
+  #     - /app/node_modules
+  #   environment:
+  #     - CHOKIDAR_USEPOLLING=true # Helps with hot reloading in some environments
+
+  # Placeholder for other services like databases, etc.
+  # database:
+  #   image: postgres:latest
+  #   ports:
+  #     - "5432:5432"
+  #   environment:
+  #     POSTGRES_DB: yourdbname
+  #     POSTGRES_USER: yourdbuser
+  #     POSTGRES_PASSWORD: yourdbpassword
+  #   volumes:
+  #     - db-data:/var/lib/postgresql/data
+# volumes:
+#   # db-data:
