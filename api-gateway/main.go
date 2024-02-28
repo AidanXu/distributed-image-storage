@@ -1,17 +1,20 @@
 package main
 
 import (
+	handlers "api-gateway/internal/handlers"
 	"log"
 	"net/http"
 
-	"api-gateway/internal/handlers"
+	"github.com/gorilla/mux"
 )
 
 func main() {
-    http.HandleFunc("/", handlers.BaseHandler)
+    r := mux.NewRouter()
+
+    r.PathPrefix("/login").HandlerFunc(handlers.LoginHandler)
 
     log.Println("Starting API gateway on port 8080...")
-    if err := http.ListenAndServe(":8080", nil); err != nil {
+    if err := http.ListenAndServe(":8080", r); err != nil {
         log.Fatalf("Failed to start server: %v", err)
     }
 }
