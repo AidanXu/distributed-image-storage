@@ -18,6 +18,7 @@ The entire system is deployed on Kubernetes, which automates deployment, scaling
 
 - **Go**: For writing backend services, offering high performance and easy concurrency.
 - **React**: Powers the front-end application, providing a responsive user interface.
+- **PostgreSQL**: Database for managing users and authentication
 - **Docker & Docker Compose**: For containerizing the application and its dependencies, simplifying deployment and development.
 - **Kubernetes**: For orchestrating container deployment, scaling, and management.
 - **MinIO**: For distributed object storage, offering scalability, security, and performance.
