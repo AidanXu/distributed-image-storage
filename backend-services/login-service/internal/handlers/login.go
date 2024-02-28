@@ -7,7 +7,7 @@ import (
 	dto "login-service/internal/DTO"
 	auth "login-service/internal/auth"
 
-	jwt "github.com/dgrijalva/jwt-go"
+	jwt "github.com/golang-jwt/jwt/v4"
 	"golang.org/x/crypto/bcrypt"
 )
 

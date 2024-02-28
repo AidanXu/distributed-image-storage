@@ -2,45 +2,62 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
+	"log"
 	"net/http"
+	"strings"
+
+	jwt "github.com/golang-jwt/jwt/v4"
 )
 
 func StorageRequestHandler(w http.ResponseWriter, r *http.Request) {
+
+	token, err := ValidateToken(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "Cannot extract claims", http.StatusInternalServerError)
+		return
+	}
+
+	log.Printf("Token claims: %v", claims)
+
 	w.WriteHeader(http.StatusOK)
-    json.NewEncoder(w).Encode("reached storage endpoint")
+	json.NewEncoder(w).Encode("Reached storage endpoint successfully")
 }
 
-// var jwtKey = []byte("xdd123") // temp secret for now
+var jwtKey = []byte("xdd123") // temp secret for now
 
-// func ValidateToken(w http.ResponseWriter, r *http.Request) (*jwt.Token, error) {
-// 	authHeader := r.Header.Get("Authorization")
-// 	if authHeader == "" {
-// 		return nil, errors.New("authorization header is required")
-// 	}
+func ValidateToken(r *http.Request) (*jwt.Token, error) {
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		return nil, errors.New("Authorization header is required")
+	}
 
-// 	// Expecting "Bearer <token>"
-// 	bearerToken := strings.Split(authHeader, " ")
-// 	if len(bearerToken) != 2 {
-// 		return nil, errors.New("invalid token format")
-// 	}
+	bearerToken := strings.Split(authHeader, " ")
+	if len(bearerToken) != 2 || bearerToken[0] != "Bearer" {
+		return nil, errors.New("Invalid token format")
+	}
 
-// 	tokenString := bearerToken[1]
-// 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-// 		// Validate the alg is what you expect:
-// 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-// 			return nil, errors.New("unexpected signing method")
-// 		}
+	tokenString := bearerToken[1]
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.New("Unexpected signing method")
+		}
+		return jwtKey, nil
+	})
 
-// 		return jwtKey, nil
-// 	})
+	if err != nil {
+		return nil, err
+	}
 
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	if !token.Valid {
+		return nil, errors.New("Invalid token")
+	}
 
-// 	if !token.Valid {
-// 		return nil, errors.New("invalid token")
-// 	}
-
-// 	return token, nil
-// }
+	return token, nil
+}
