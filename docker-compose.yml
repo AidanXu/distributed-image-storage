@@ -21,6 +21,16 @@ services:
       - ./login-service:/app/src
     command: go run main.go
 
+  storage-service:
+    build:
+      context: ./backend-services/storage-service
+      dockerfile: Dockerfile
+    ports:
+      - '9091:9091'
+    volumes:
+      - ./storage-service:/app/src
+    command: go run main.go
+
   # frontend:
   #   build:
   #     context: ./frontend

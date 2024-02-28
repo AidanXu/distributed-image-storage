@@ -12,6 +12,7 @@ func main() {
     r := mux.NewRouter()
 
     r.PathPrefix("/login").HandlerFunc(handlers.LoginHandler)
+    r.PathPrefix("/storage").HandlerFunc(handlers.StorageHandler)
 
     log.Println("Starting API gateway on port 8080...")
     if err := http.ListenAndServe(":8080", r); err != nil {

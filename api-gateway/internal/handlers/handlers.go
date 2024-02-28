@@ -25,6 +25,26 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
     r.Header.Set("X-Forwarded-Host", r.Header.Get("Host"))
     r.Host = url.Host
 
-    // Serve the request using the reverse proxy
+    proxy.ServeHTTP(w, r)
+}
+
+func StorageHandler(w http.ResponseWriter, r *http.Request) {
+
+    storageServiceURL := "http://storage-service:9091"
+
+    url, err := url.Parse(storageServiceURL)
+    if err != nil {
+        log.Printf("Failed to parse target URL: %v", err)
+        http.Error(w, "Internal server error", http.StatusInternalServerError)
+        return
+    }
+
+    proxy := httputil.NewSingleHostReverseProxy(url)
+
+    r.URL.Host = url.Host
+    r.URL.Scheme = url.Scheme
+    r.Header.Set("X-Forwarded-Host", r.Header.Get("Host"))
+    r.Host = url.Host
+
     proxy.ServeHTTP(w, r)
 }
