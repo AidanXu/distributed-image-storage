@@ -31,17 +31,17 @@ services:
       - ./storage-service:/app/src
     command: go run main.go
 
-  # frontend:
-  #   build:
-  #     context: ./frontend
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - '3000:3000'
-  #   volumes:
-  #     - ./frontend:/app
-  #     - /app/node_modules
-  #   environment:
-  #     - CHOKIDAR_USEPOLLING=true
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
 
   db:
     image: postgres:latest
@@ -52,7 +52,7 @@ services:
     volumes:
       - db-data:/var/lib/postgresql/data
     ports:
-      - '6969:6969'
+      - '5432:5432'
 
 volumes:
   db-data:
