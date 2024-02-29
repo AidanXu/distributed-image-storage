@@ -1,8 +1,12 @@
 import './App.css';
-import SignIn from './login/SignIn';
+import AppRouter from './routing/Router';
 
 function App() {
-	return <SignIn></SignIn>;
+	return (
+		<div>
+			<AppRouter />
+		</div>
+	);
 }
 
 export default App;

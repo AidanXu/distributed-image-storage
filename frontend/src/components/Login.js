@@ -1,4 +1,5 @@
-import * as React from 'react';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -12,15 +13,26 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 
-export default function SignIn() {
+export default function Login() {
 	const handleSubmit = (event) => {
 		event.preventDefault();
 		const data = new FormData(event.currentTarget);
-		console.log({
-			email: data.get('email'),
-			password: data.get('password'),
-		});
+		const checked = data.get('remember') !== null;
+		// console.log({
+		// 	username: data.get('username'),
+		// 	password: data.get('password'),
+		// 	remember: checked,
+		// });
 	};
+
+	let navigate = useNavigate();
+
+	useEffect(() => {
+		const token = localStorage.getItem('token');
+		if (token) {
+			navigate('/home');
+		}
+	});
 
 	return (
 		<Container component="main" maxWidth="xs">
@@ -44,10 +56,10 @@ export default function SignIn() {
 						margin="normal"
 						required
 						fullWidth
-						id="email"
-						label="Email Address"
-						name="email"
-						autoComplete="email"
+						id="username"
+						label="Username"
+						name="username"
+						autoComplete="username"
 						autoFocus
 					/>
 					<TextField
@@ -61,7 +73,9 @@ export default function SignIn() {
 						autoComplete="current-password"
 					/>
 					<FormControlLabel
-						control={<Checkbox value="remember" color="primary" />}
+						control={
+							<Checkbox value="remember" color="primary" name="remember" />
+						}
 						label="Remember me"
 					/>
 					<Button
@@ -73,11 +87,6 @@ export default function SignIn() {
 						Sign In
 					</Button>
 					<Grid container>
-						<Grid item xs>
-							<Link href="#" variant="body2">
-								Forgot password?
-							</Link>
-						</Grid>
 						<Grid item>
 							<Link href="#" variant="body2">
 								{"Don't have an account? Sign Up"}
