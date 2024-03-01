@@ -18,7 +18,7 @@ services:
     ports:
       - '9090:9090'
     volumes:
-      - ./login-service:/app/src
+      - ./backend-services/login-service:/app/src
     command: go run main.go
 
   storage-service:
@@ -28,20 +28,20 @@ services:
     ports:
       - '9091:9091'
     volumes:
-      - ./storage-service:/app/src
+      - ./backend-services/storage-service:/app/src
     command: go run main.go
 
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    ports:
-      - '3000:3000'
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    environment:
-      - CHOKIDAR_USEPOLLING=true
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - '3000:3000'
+  #   volumes:
+  #     - ./frontend:/app
+  #     - /app/node_modules
+  #   environment:
+  #     - CHOKIDAR_USEPOLLING=true
 
   db:
     image: postgres:latest
@@ -54,5 +54,18 @@ services:
     ports:
       - '5432:5432'
 
+  minio:
+    image: minio/minio
+    volumes:
+      - minio_data:/data
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+
 volumes:
   db-data:
+  minio_data:

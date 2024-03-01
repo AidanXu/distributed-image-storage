@@ -2,62 +2,99 @@ package handlers
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"log"
 	"net/http"
-	"strings"
+
+	auth "storage-service/internal/auth"
 
 	jwt "github.com/golang-jwt/jwt/v4"
+	minio "github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
-func StorageRequestHandler(w http.ResponseWriter, r *http.Request) {
+var minioClient *minio.Client
 
-	token, err := ValidateToken(r)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
-		return
-	}
-
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Cannot extract claims", http.StatusInternalServerError)
-		return
-	}
-
-	log.Printf("Token claims: %v", claims)
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode("Reached storage endpoint successfully")
+func init() {
+    var err error
+    // Initialize the MinIO client
+    minioClient, err = minio.New("minio:9000", &minio.Options{
+        Creds:  credentials.NewStaticV4("minioadmin", "minioadmin", ""),
+        Secure: false, 
+    })
+    if err != nil {
+        log.Fatalf("Could not initialize MinIO client: %v", err)
+    }
 }
 
-var jwtKey = []byte("xdd123") // temp secret for now
+func UploadHandler(w http.ResponseWriter, r *http.Request) {
+    token, err := auth.ValidateToken(r)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusUnauthorized)
+        return
+    }
 
-func ValidateToken(r *http.Request) (*jwt.Token, error) {
-	authHeader := r.Header.Get("Authorization")
-	if authHeader == "" {
-		return nil, errors.New("Authorization header is required")
-	}
+    claims, ok := token.Claims.(jwt.MapClaims)
+    if !ok {
+        http.Error(w, "Cannot extract claims", http.StatusInternalServerError)
+        return
+    }
 
-	bearerToken := strings.Split(authHeader, " ")
-	if len(bearerToken) != 2 || bearerToken[0] != "Bearer" {
-		return nil, errors.New("Invalid token format")
-	}
+    username, ok := claims["sub"].(string)
+    if !ok {
+        http.Error(w, "Cannot extract username from token", http.StatusInternalServerError)
+        return
+    }
 
-	tokenString := bearerToken[1]
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.New("Unexpected signing method")
-		}
-		return jwtKey, nil
-	})
+    // Parse multipart form with a max memory of 50MB.
+    if err := r.ParseMultipartForm(50 << 20); err != nil {
+        http.Error(w, "Error parsing multipart form: "+err.Error(), http.StatusBadRequest)
+        return
+    }
 
-	if err != nil {
-		return nil, err
-	}
+    files := r.MultipartForm.File["image"]
+    var uploadedFiles []string
 
-	if !token.Valid {
-		return nil, errors.New("Invalid token")
-	}
+    for _, fileHeader := range files {
+        file, err := fileHeader.Open()
+        if err != nil {
+            http.Error(w, "Invalid file upload", http.StatusBadRequest)
+            return
+        }
+        defer file.Close()
 
-	return token, nil
+        fileName := fileHeader.Filename
+        fileType := fileHeader.Header.Get("Content-Type")
+
+        if fileType != "image/jpeg" && fileType != "image/png" {
+            http.Error(w, "Unsupported file type", http.StatusBadRequest)
+            return
+        }
+
+        // Construct the object name using the username for organization
+        objectName := fmt.Sprintf("%s/%s", username, fileName)
+
+        // Upload the file to MinIO
+        _, err = minioClient.PutObject(r.Context(), "photobucket", objectName, file, fileHeader.Size, minio.PutObjectOptions{ContentType: fileType})
+        if err != nil {
+            log.Printf("Failed to upload: %v", err)
+            http.Error(w, "Failed to upload file", http.StatusInternalServerError)
+            return
+        }
+
+        uploadedFiles = append(uploadedFiles, fileName)
+    }
+
+    response := map[string]interface{}{
+        "message": "Files uploaded successfully",
+        "uploadedFiles": uploadedFiles,
+    }
+
+    w.WriteHeader(http.StatusOK)
+    if err := json.NewEncoder(w).Encode(response); err != nil {
+        http.Error(w, "Error encoding response", http.StatusInternalServerError)
+        return
+    }
+
+    log.Printf("Uploaded files: %v", uploadedFiles)
 }

@@ -9,7 +9,7 @@ import (
 
 func main() {
 
-    http.HandleFunc("/storage/addimage", handlers.StorageRequestHandler)
+    http.HandleFunc("/storage/upload", handlers.UploadHandler)
 
     log.Println("Storage service listening on port 9091...")
     if err := http.ListenAndServe(":9091", nil); err != nil {
