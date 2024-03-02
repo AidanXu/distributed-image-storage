@@ -1,10 +1,12 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	auth "storage-service/internal/auth"
 
@@ -97,4 +99,60 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
     }
 
     log.Printf("Uploaded files: %v", uploadedFiles)
+}
+
+func GetPhotos(w http.ResponseWriter, r *http.Request) {
+    token, err := auth.ValidateToken(r)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusUnauthorized)
+        return
+    }
+
+    claims, ok := token.Claims.(jwt.MapClaims)
+    if !ok {
+        http.Error(w, "Cannot extract claims", http.StatusInternalServerError)
+        return
+    }
+
+    username, ok := claims["sub"].(string)
+    if !ok {
+        http.Error(w, "Cannot extract username from token", http.StatusInternalServerError)
+        return
+    }
+
+    // Prefix to search for
+    prefix := fmt.Sprintf("%s/", username)
+
+    // Initiate a list objects call to MinIO server
+    objectCh := minioClient.ListObjects(context.Background(), "photobucket", minio.ListObjectsOptions{
+        Prefix:    prefix,
+        Recursive: true,
+    })
+
+    var photoURLs []string
+    for object := range objectCh {
+        if object.Err != nil {
+            log.Printf("Failed to list photos: %v", object.Err)
+            http.Error(w, "Failed to retrieve photos", http.StatusInternalServerError)
+            return
+        }
+
+        // Generate a signed URL for the photo
+        presignedURL, err := minioClient.PresignedGetObject(context.Background(), "photobucket", object.Key, time.Hour, nil)
+        if err != nil {
+            log.Printf("Failed to generate signed URL: %v", err)
+            http.Error(w, "Failed to generate signed URL", http.StatusInternalServerError)
+            return
+        }
+
+        photoURLs = append(photoURLs, presignedURL.String())
+    }
+
+    w.WriteHeader(http.StatusOK)
+    if err := json.NewEncoder(w).Encode(map[string][]string{"photos": photoURLs}); err != nil {
+        http.Error(w, "Error encoding response", http.StatusInternalServerError)
+        return
+    }
+
+    log.Printf("Signed URLs generated for user: %s", username)
 }

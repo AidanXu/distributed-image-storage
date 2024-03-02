@@ -2,11 +2,9 @@ FROM node:20.11.1
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+COPY . .
 
 RUN rm -rf node_modules && npm install
-
-COPY . .
 
 EXPOSE 3000
 

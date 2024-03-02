@@ -7,6 +7,7 @@ import {
 } from 'react-router-dom';
 import Login from '../components/Login';
 import App from '../components/Test';
+import ImageGallery from '../components/Images';
 // import Register from './components/Register';
 // import Home from './components/Home';
 //import ProtectedRoute from './ProtectedRoute';
@@ -19,6 +20,7 @@ const AppRouter = () => {
 				{/* <Route path="/register" element={<Register />} />
 				<Route path="/home" element={<ProtectedRoute component={Home} />} /> */}
 				<Route path="/test" element={<App />} />
+				<Route path="/test2" element={<ImageGallery />} />
 				<Route path="/" element={<Navigate replace to="/login" />} />
 				<Route path="*" element={<Navigate replace to="/login" />} />{' '}
 				{/* Catch-all route */}
