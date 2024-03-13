@@ -12,22 +12,16 @@ import (
 func main() {
     r := mux.NewRouter()
 
-    // Explicitly handle OPTIONS method for preflight requests
-    r.Methods("OPTIONS").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        // Just return no content - CORS headers are added at the middleware
-        w.WriteHeader(http.StatusNoContent)
-    })
+    r.PathPrefix("/login").HandlerFunc(handlers.LoginHandler).Methods("POST", "OPTIONS")
+    r.PathPrefix("/storage").HandlerFunc(handlers.StorageHandler).Methods("GET", "POST", "OPTIONS")
 
-    r.HandleFunc("/login", handlers.LoginHandler).Methods("POST", "OPTIONS")
-    r.HandleFunc("/storage", handlers.StorageHandler).Methods("GET", "POST", "OPTIONS")
-
-    // Setup CORS to allow everything for demonstration; adjust as needed
     corsHandler := gorillaHandlers.CORS(
-        gorillaHandlers.AllowedOrigins([]string{"*"}), // This should be adjusted in production
-        gorillaHandlers.AllowedMethods([]string{"POST", "GET", "OPTIONS"}),
-        gorillaHandlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"}),
+        gorillaHandlers.AllowedOrigins([]string{"*"}), // Allow all origins
+        gorillaHandlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}), // Allow common methods
+        gorillaHandlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"}), // Allow common headers
         gorillaHandlers.AllowCredentials(),
     )(r)
+
 
     log.Println("Starting API gateway on port 8080...")
     if err := http.ListenAndServe(":8080", corsHandler); err != nil {

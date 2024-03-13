@@ -20,10 +20,11 @@ var minioClient *minio.Client
 func init() {
     var err error
     // Initialize the MinIO client
-    minioClient, err = minio.New("minio:9000", &minio.Options{
+    minioClient, err = minio.New("host.docker.internal:9000", &minio.Options{
         Creds:  credentials.NewStaticV4("minioadmin", "minioadmin", ""),
-        Secure: false, 
+        Secure: false,
     })
+    
     if err != nil {
         log.Fatalf("Could not initialize MinIO client: %v", err)
     }

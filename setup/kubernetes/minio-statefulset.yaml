@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: minio
+  namespace: server4 # 1-4
+spec:
+  serviceName: 'minio'
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minio
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      containers:
+        - name: minio
+          image: minio/minio
+          args:
+            - server
+            - http://minio-0.minio.server1.svc.cluster.local/data
+            - http://minio-0.minio.server2.svc.cluster.local/data
+            - http://minio-0.minio.server3.svc.cluster.local/data
+            - http://minio-0.minio.server4.svc.cluster.local/data
+          ports:
+            - containerPort: 9000
+          env:
+            - name: MINIO_ROOT_USER
+              value: 'minioadmin'
+            - name: MINIO_ROOT_PASSWORD
+              value: 'minioadmin'
+          volumeMounts:
+            - name: data
+              mountPath: '/data'
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ['ReadWriteOnce']
+        resources:
+          requests:
+            storage: 10Gi
