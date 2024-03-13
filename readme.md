@@ -12,7 +12,7 @@ The architecture is built on a microservices-based approach, ensuring high avail
 - **Storage Service**: Handles image upload, download, and management, backed by MinIO for storage.
 - **MinIO**: A high-performance distributed object storage server, configured for automatic sharding and erasure coding to ensure data durability and high availability.
 
-The entire system is deployed on Kubernetes, which automates deployment, scaling, and operations of application containers across clusters of hosts.
+The entire system is deployed on Kubernetes, which automates deployment, scaling, and operations of application containers across clusters of hosts. We are using namespaces in kubernetes to simulate servers in different locations and using minIO's server side bucket replication to ensure data consistency across 4 different "servers". By default, minIO uses erasure coding to provide data redundancy and availability. For each write operation, minIO partitions the obejct into data and parity shards, by default are using EC: 4, meaning that we are setting aside 25% of storage space for parity, and require a minimum of 75% drive space available for both reading and writing.
 
 ## Technologies Used
 
@@ -22,4 +22,3 @@ The entire system is deployed on Kubernetes, which automates deployment, scaling
 - **Docker & Docker Compose**: For containerizing the application and its dependencies, simplifying deployment and development.
 - **Kubernetes**: For orchestrating container deployment, scaling, and management.
 - **MinIO**: For distributed object storage, offering scalability, security, and performance.
-- **Helm Charts**: To package and deploy Kubernetes applications, simplifying the deployment and management of complex applications.
